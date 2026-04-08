@@ -1,27 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
-public class cam : MonoBehaviour
+public class CameraSwitch : MonoBehaviour
 {
-    [SerializeField] private CinemachineVirtualCameraBase cameraA;
-    [SerializeField] private CinemachineVirtualCameraBase cameraB;
-    [SerializeField] private KeyCode switchKey = KeyCode.C;
+    [SerializeField] private CinemachineVirtualCamera cameraA = null!;
+[SerializeField] private CinemachineVirtualCamera cameraB = null!;
+[SerializeField] private KeyCode switchKey = KeyCode.C;
 
-    [SerializeField] private int activePriority = 20;
-    [SerializeField] private int inactivePriority = 10;
-
+    private CinemachineBrain brain;
     private bool isCameraAActive = true;
 
     private void Start()
     {
-        SetActiveCamera(isCameraAActive);
+        brain = Camera.main.GetComponent<CinemachineBrain>();
+        SetActiveCamera(true);
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(switchKey))
+        if (Input.GetKeyDown(switchKey) && !brain.IsBlending)
         {
             isCameraAActive = !isCameraAActive;
             SetActiveCamera(isCameraAActive);
@@ -30,13 +27,7 @@ public class cam : MonoBehaviour
 
     private void SetActiveCamera(bool useCameraA)
     {
-        if (cameraA == null || cameraB == null)
-        {
-            Debug.LogWarning("Assign both virtual cameras in the Inspector.", this);
-            return;
-        }
-
-        cameraA.Priority = useCameraA ? activePriority : inactivePriority;
-        cameraB.Priority = useCameraA ? inactivePriority : activePriority;
+        cameraA.Priority = useCameraA ? 20 : 10;
+        cameraB.Priority = useCameraA ? 10 : 20;
     }
 }

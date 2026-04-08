@@ -51,8 +51,8 @@ public class PlayerMovement : MonoBehaviour
         // Is running?
         inputMultiplier = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) ? 1f : 0.5f;
 
-        animator.SetFloat("Horizontal", horizontalInput * inputMultiplier);
-        animator.SetFloat("Vertical", verticalInput * inputMultiplier);
+        animator.SetFloat("Horizontal", horizontalInput * inputMultiplier, 0.1f, Time.deltaTime);
+        animator.SetFloat("Vertical", verticalInput * inputMultiplier, 0.1f, Time.deltaTime);
 
         Vector3 movementDirection = new Vector3(horizontalInput, 0, verticalInput);
         float inputMagnitude = Mathf.Clamp01(movementDirection.magnitude);
@@ -80,9 +80,21 @@ public class PlayerMovement : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit))
-            currentlyAimedCollider = hit.collider.gameObject.GetComponent<IShootable>()?.TakeHit();
+        {
+            // Reject target if it is behind the player.
+            // Dot product is positive when the target is in the forward hemisphere.
+            Vector3 directionToTarget = (hit.point - transform.position).normalized;
+            bool isInFront = Vector3.Dot(transform.forward, directionToTarget) > 0f;
+
+            if (isInFront)
+                currentlyAimedCollider = hit.collider.gameObject.GetComponent<IShootable>()?.TakeHit();
+            else
+                currentlyAimedCollider = null;
+        }
         else
+        {
             currentlyAimedCollider = null;
+        }
     }
 
     private void SetHeadIK(Vector3 targetPosition, float weight)
