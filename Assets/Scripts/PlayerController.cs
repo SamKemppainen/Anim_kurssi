@@ -4,6 +4,7 @@ public class PlayerMovement : MonoBehaviour
 {
     public float AnimatorSpeed = 1f;
     public float DistanceToGround = 0.05f;
+    public float IKWeightBlendSpeed = 8f;
     public LayerMask IKLayers;
 
     protected Animator animator => GetComponent<Animator>();
@@ -29,6 +30,10 @@ public class PlayerMovement : MonoBehaviour
 
     public Vector3 rightHandTargetPosition;
     public Vector3 rightHandCurrentPosition;
+
+    private float leftHandIKWeight;
+    private float rightHandIKWeight;
+    private float headIKWeight;
 
     private void Awake()
     {
@@ -80,9 +85,9 @@ public class PlayerMovement : MonoBehaviour
             currentlyAimedCollider = null;
     }
 
-    private void SetHeadIK(Vector3 targetPosition)
+    private void SetHeadIK(Vector3 targetPosition, float weight)
     {
-        animator.SetLookAtWeight(1f);
+        animator.SetLookAtWeight(weight);
         animator.SetLookAtPosition(targetPosition);
     }
 
@@ -152,16 +157,24 @@ public class PlayerMovement : MonoBehaviour
                 rightHandTargetPosition = transformRightHand.position;
         }
 
-        // Hand weights — 0 when not aiming, hands fully follow animation
-        float leftWeight = leftMouseHeld ? 1f : 0f;
-        float rightWeight = rightMouseHeld ? 1f : 0f;
+        // Hand IK only activates when a shootable target is under the cursor.
+        bool hasShootableTarget = currentlyAimedCollider != null;
+
+        // Blend IK weights to avoid snapping when releasing mouse buttons.
+        float leftTargetWeight = (leftMouseHeld && hasShootableTarget) ? 1f : 0f;
+        float rightTargetWeight = (rightMouseHeld && hasShootableTarget) ? 1f : 0f;
+        float headTargetWeight = (leftMouseHeld || rightMouseHeld) ? 1f : 0f;
+
+        leftHandIKWeight = Mathf.MoveTowards(leftHandIKWeight, leftTargetWeight, IKWeightBlendSpeed * Time.deltaTime);
+        rightHandIKWeight = Mathf.MoveTowards(rightHandIKWeight, rightTargetWeight, IKWeightBlendSpeed * Time.deltaTime);
+        headIKWeight = Mathf.MoveTowards(headIKWeight, headTargetWeight, IKWeightBlendSpeed * Time.deltaTime);
 
         // Smoothly move hands
         leftHandCurrentPosition = Vector3.Lerp(leftHandCurrentPosition, leftHandTargetPosition, Time.deltaTime * 10f);
-        SetHandIKPos(AvatarIKGoal.LeftHand, leftHandCurrentPosition, leftWeight);
+        SetHandIKPos(AvatarIKGoal.LeftHand, leftHandCurrentPosition, leftHandIKWeight);
 
         rightHandCurrentPosition = Vector3.Lerp(rightHandCurrentPosition, rightHandTargetPosition, Time.deltaTime * 10f);
-        SetHandIKPos(AvatarIKGoal.RightHand, rightHandCurrentPosition, rightWeight);
+        SetHandIKPos(AvatarIKGoal.RightHand, rightHandCurrentPosition, rightHandIKWeight);
 
         // Feet follow ground
         SetFootIKPos(AvatarIKGoal.LeftFoot);
@@ -169,6 +182,6 @@ public class PlayerMovement : MonoBehaviour
 
         // Smoothly move head
         headCurrentPosition = Vector3.Lerp(headCurrentPosition, headTargetPosition, Time.deltaTime * 10f);
-        SetHeadIK(headCurrentPosition);
+        SetHeadIK(headCurrentPosition, headIKWeight);
     }
 }

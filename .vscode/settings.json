@@ -1,4 +1,4 @@
-﻿{
+{
     "files.exclude":
     {
         "**/.DS_Store":true,
@@ -51,5 +51,10 @@
         "ProjectSettings/":true,
         "temp/":true,
         "Temp/":true
-    }
+    },
+    "csharp-dev-tools.roslyn.projectOrSolutionFiles": [
+        "c:\\Anim_kurssi\\Anim_kurssi\\Anim_kurssi.sln",
+        "c:\\Anim_kurssi\\Anim_kurssi\\CharacterAnimations.sln",
+        "c:\\Anim_kurssi\\Anim_kurssi\\VITTUAPASKaskdsf.sln"
+    ]
 }
